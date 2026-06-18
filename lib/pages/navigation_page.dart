@@ -27,8 +27,14 @@ class _HomeWithBottomNavState extends State<HomeWithBottomNav> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Accueil"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Produits"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Panier"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: "Produits",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: "Panier",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profil"),
         ],
       ),

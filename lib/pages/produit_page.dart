@@ -11,7 +11,7 @@ class _ProduitPageState extends State<ProduitPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
+      backgroundColor: Colors.white,
     );
   }
 }

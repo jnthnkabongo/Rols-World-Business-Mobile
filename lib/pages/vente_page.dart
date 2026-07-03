@@ -293,24 +293,83 @@ class _VentePageState extends State<VentePage> {
                         ),
                       ],
                     ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '${vente.total.toStringAsFixed(2)} €',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[900],
-                          ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${vente.total.toStringAsFixed(2)} €',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[900],
+                              ),
+                            ),
+                            Text(
+                              '${vente.price.toStringAsFixed(2)} €/unité',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '${vente.price.toStringAsFixed(2)} €/unité',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
+                        SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+                          color: Colors.white,
+                          onSelected: (String choice) {
+                            _handleMenuChoice(choice, vente);
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              PopupMenuItem<String>(
+                                value: 'details',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.visibility,
+                                      color: Colors.green,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Voir détails'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'refund',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.money_off,
+                                      color: Colors.orange,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Rembourser'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Supprimer'),
+                                  ],
+                                ),
+                              ),
+                            ];
+                          },
                         ),
                       ],
                     ),
@@ -352,5 +411,25 @@ class _VentePageState extends State<VentePage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _handleMenuChoice(String choice, Vente vente) {
+    switch (choice) {
+      case 'details':
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Voir détails: ${vente.productName}')),
+        );
+        break;
+      case 'refund':
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rembourser: ${vente.productName}')),
+        );
+        break;
+      case 'delete':
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Supprimer: ${vente.productName}')),
+        );
+        break;
+    }
   }
 }

@@ -215,37 +215,96 @@ class _RemisePageState extends State<RemisePage> {
                   ),
                 ],
               ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '-${remise.percentage.toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: remise.isActive ? Colors.green : Colors.grey,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: remise.isActive
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      remise.isActive ? 'Active' : 'Expirée',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: remise.isActive ? Colors.green : Colors.grey,
-                        fontWeight: FontWeight.w600,
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '-${remise.percentage.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: remise.isActive ? Colors.green : Colors.grey,
+                        ),
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: remise.isActive
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          remise.isActive ? 'Active' : 'Expirée',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: remise.isActive ? Colors.green : Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(width: 8),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+                    color: Colors.white,
+                    onSelected: (String choice) {
+                      _handleMenuChoice(choice, remise);
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit,
+                                color: Colors.blue[900],
+                                size: 20,
+                              ),
+                              SizedBox(width: 12),
+                              Text('Modifier'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'toggle',
+                          child: Row(
+                            children: [
+                              Icon(
+                                remise.isActive
+                                    ? Icons.block
+                                    : Icons.check_circle,
+                                color: remise.isActive
+                                    ? Colors.red
+                                    : Colors.green,
+                                size: 20,
+                              ),
+                              SizedBox(width: 12),
+                              Text(remise.isActive ? 'Désactiver' : 'Activer'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, color: Colors.red, size: 20),
+                              SizedBox(width: 12),
+                              Text('Supprimer'),
+                            ],
+                          ),
+                        ),
+                      ];
+                    },
                   ),
                 ],
               ),
@@ -258,5 +317,29 @@ class _RemisePageState extends State<RemisePage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _handleMenuChoice(String choice, Remise remise) {
+    switch (choice) {
+      case 'edit':
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Modifier: ${remise.name}')));
+        break;
+      case 'toggle':
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${remise.isActive ? "Désactiver" : "Activer"}: ${remise.name}',
+            ),
+          ),
+        );
+        break;
+      case 'delete':
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Supprimer: ${remise.name}')));
+        break;
+    }
   }
 }

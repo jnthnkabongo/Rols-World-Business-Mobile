@@ -305,14 +305,29 @@ class _ProduitPageState extends State<ProduitPage>
                 size: 28,
               ),
             ),
-            title: Text(
-              produit.name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  produit.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  '${produit.price.toStringAsFixed(2)} \$',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[900],
+                  ),
+                ),
+              ],
             ),
+
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -355,13 +370,51 @@ class _ProduitPageState extends State<ProduitPage>
                 ),
               ],
             ),
-            trailing: Text(
-              '${produit.price.toStringAsFixed(2)} €',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue[900],
-              ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+
+              children: [
+                SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+                  color: Colors.white,
+                  onSelected: (String choice) {
+                    _handleMenuChoice(choice, produit);
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem<String>(
+                        value: 'remise',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.discount,
+                              color: Colors.blue[900],
+                              size: 20,
+                            ),
+                            SizedBox(width: 12),
+                            Text('Remise'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'vente',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.shopping_bag,
+                              color: Colors.green[700],
+                              size: 20,
+                            ),
+                            SizedBox(width: 12),
+                            Text('Vente'),
+                          ],
+                        ),
+                      ),
+                    ];
+                  },
+                ),
+              ],
             ),
           ),
         );
@@ -371,5 +424,20 @@ class _ProduitPageState extends State<ProduitPage>
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _handleMenuChoice(String choice, Produit produit) {
+    switch (choice) {
+      case 'remise':
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Remise: ${produit.name}')));
+        break;
+      case 'vente':
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Vente: ${produit.name}')));
+        break;
+    }
   }
 }

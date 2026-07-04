@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:rols/pages/navigation_page.dart';
+import 'package:rols/services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,25 +25,71 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // Simulate login process
-      Future.delayed(const Duration(seconds: 2), () {
+      try {
+        final response = await ApiService.login(
+          _emailController.text,
+          _passwordController.text,
+        );
+
+        if (response.containsKey('user')) {
+          await ApiService.sauvegardeDonneesUser(
+            'auth_token',
+            response['token'],
+          );
+          await ApiService.sauvegardeDonneesUser('user', response['user']);
+
+          print(
+            "Les données sauvegardes : ${response['token']} et ${response['user']}",
+          );
+
+          print(response['message']);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response['message']),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeWithBottomNav(),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        print(e);
+        _showErrorSnackBar('Erreur de connexion: ${e.toString()}');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Connexion échouée'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+
         setState(() {
           _isLoading = false;
         });
-
-        // Navigate to home page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeWithBottomNav()),
-        );
-      });
+      }
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override

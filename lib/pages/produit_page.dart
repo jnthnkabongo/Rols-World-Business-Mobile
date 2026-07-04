@@ -1,25 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:rols/services/api_service.dart';
 
 class Produit {
-  final String name;
-  final String description;
-  final double price;
-  final String imageUrl;
-  final int quantity;
-  final String serialNumber;
-  final DateTime registrationDate;
+  final int id;
+  final String nom;
+  final String? description;
+  final String prixVente;
+  final String deviseId;
+  final String? modele;
+  final String status;
+  final String? taille;
+  final DateTime createdAt;
   final IconData categoryIcon;
 
   Produit({
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.imageUrl,
-    required this.quantity,
-    required this.serialNumber,
-    required this.registrationDate,
+    required this.id,
+    required this.nom,
+    this.description,
+    required this.prixVente,
+    required this.deviseId,
+    this.modele,
+    required this.status,
+    this.taille,
+    required this.createdAt,
     required this.categoryIcon,
   });
+
+  factory Produit.fromJson(Map<String, dynamic> json, IconData icon) {
+    return Produit(
+      id: json['id'],
+      nom: json['nom'] ?? '',
+      description: json['description'],
+      prixVente: json['prix_vente']?.toString() ?? '0',
+      deviseId: json['devise_id']?.toString() ?? '0',
+      modele: json['modele'],
+      status: json['status'] ?? 'unknown',
+      taille: json['taille'],
+      createdAt: DateTime.parse(
+        json['created_at'] ?? DateTime.now().toIso8601String(),
+      ),
+      categoryIcon: icon,
+    );
+  }
+
+  String get deviseSymbole {
+    if (deviseId == '1') {
+      return '\$';
+    } else if (deviseId == '2') {
+      return 'FC';
+    }
+    return '';
+  }
 }
 
 class ProduitPage extends StatefulWidget {
@@ -33,125 +64,65 @@ class _ProduitPageState extends State<ProduitPage>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   final TextEditingController _searchController = TextEditingController();
+  bool _isLoading = false;
 
-  final List<Produit> _electroniques = [
-    Produit(
-      name: 'iPhone 15 Pro',
-      description: '256GB, Titanium',
-      price: 1199.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 15,
-      serialNumber: 'IPH-2024-001',
-      registrationDate: DateTime(2024, 1, 15),
-      categoryIcon: Icons.computer,
-    ),
-    Produit(
-      name: 'MacBook Air M3',
-      description: '13 pouces, 8GB RAM',
-      price: 1299.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 8,
-      serialNumber: 'MAC-2024-002',
-      registrationDate: DateTime(2024, 2, 10),
-      categoryIcon: Icons.computer,
-    ),
-    Produit(
-      name: 'AirPods Pro 2',
-      description: 'USB-C, Active Noise Cancellation',
-      price: 249.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 32,
-      serialNumber: 'APD-2024-003',
-      registrationDate: DateTime(2024, 3, 5),
-      categoryIcon: Icons.computer,
-    ),
-    Produit(
-      name: 'Samsung Galaxy S24',
-      description: '128GB, Phantom Black',
-      price: 899.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 20,
-      serialNumber: 'SAM-2024-004',
-      registrationDate: DateTime(2024, 4, 20),
-      categoryIcon: Icons.computer,
-    ),
-  ];
+  List<Produit> _electroniques = [];
+  List<Produit> _chaussures = [];
+  List<Produit> _accessoires = [];
 
-  final List<Produit> _chaussures = [
-    Produit(
-      name: 'Nike Air Max 270',
-      description: 'Taille 42, Noir',
-      price: 149.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 25,
-      serialNumber: 'NIK-2024-001',
-      registrationDate: DateTime(2024, 1, 20),
-      categoryIcon: Icons.sports_basketball,
-    ),
-    Produit(
-      name: 'Adidas Ultraboost',
-      description: 'Taille 43, Blanc',
-      price: 179.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 18,
-      serialNumber: 'ADI-2024-002',
-      registrationDate: DateTime(2024, 2, 15),
-      categoryIcon: Icons.sports_basketball,
-    ),
-    Produit(
-      name: 'Puma RS-X',
-      description: 'Taille 41, Rouge',
-      price: 119.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 12,
-      serialNumber: 'PUM-2024-003',
-      registrationDate: DateTime(2024, 3, 25),
-      categoryIcon: Icons.sports_basketball,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadProduits();
+  }
 
-  final List<Produit> _accessoires = [
-    Produit(
-      name: 'Montre Apple Watch',
-      description: 'Series 9, GPS',
-      price: 399.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 10,
-      serialNumber: 'APL-2024-001',
-      registrationDate: DateTime(2024, 1, 10),
-      categoryIcon: Icons.watch,
-    ),
-    Produit(
-      name: 'Sac à dos Nike',
-      description: 'Noir, 30L',
-      price: 79.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 45,
-      serialNumber: 'NIK-2024-002',
-      registrationDate: DateTime(2024, 2, 5),
-      categoryIcon: Icons.watch,
-    ),
-    Produit(
-      name: 'Lunettes Ray-Ban',
-      description: 'Aviator, Polarized',
-      price: 189.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 22,
-      serialNumber: 'RAY-2024-003',
-      registrationDate: DateTime(2024, 3, 12),
-      categoryIcon: Icons.watch,
-    ),
-    Produit(
-      name: 'Casquette Adidas',
-      description: 'Noir, Adjustable',
-      price: 29.99,
-      imageUrl: 'https://via.placeholder.com/150',
-      quantity: 50,
-      serialNumber: 'ADI-2024-004',
-      registrationDate: DateTime(2024, 4, 8),
-      categoryIcon: Icons.watch,
-    ),
-  ];
+  Future<void> _loadProduits() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final produitsData = await ApiService.getProduits();
+
+      setState(() {
+        _electroniques =
+            (produitsData['listes_produits_electroniques'] as List<dynamic>? ??
+                    [])
+                .map(
+                  (json) => Produit.fromJson(
+                    json as Map<String, dynamic>,
+                    Icons.phone_android,
+                  ),
+                )
+                .toList();
+        _chaussures =
+            (produitsData['listes_produits_accesoires'] as List<dynamic>? ?? [])
+                .map(
+                  (json) => Produit.fromJson(
+                    json as Map<String, dynamic>,
+                    Icons.sports,
+                  ),
+                )
+                .toList();
+        _accessoires =
+            (produitsData['listes_produits_chaussures'] as List<dynamic>? ?? [])
+                .map(
+                  (json) => Produit.fromJson(
+                    json as Map<String, dynamic>,
+                    Icons.headphones,
+                  ),
+                )
+                .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erreur chargement produits: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   List<Produit> get _filteredElectroniques {
     if (_searchController.text.isEmpty) {
@@ -159,9 +130,9 @@ class _ProduitPageState extends State<ProduitPage>
     }
     final query = _searchController.text.toLowerCase();
     return _electroniques.where((produit) {
-      return produit.name.toLowerCase().contains(query) ||
-          produit.serialNumber.toLowerCase().contains(query) ||
-          produit.description.toLowerCase().contains(query);
+      return produit.nom.toLowerCase().contains(query) ||
+          (produit.modele?.toLowerCase().contains(query) ?? false) ||
+          (produit.description?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
@@ -171,9 +142,9 @@ class _ProduitPageState extends State<ProduitPage>
     }
     final query = _searchController.text.toLowerCase();
     return _chaussures.where((produit) {
-      return produit.name.toLowerCase().contains(query) ||
-          produit.serialNumber.toLowerCase().contains(query) ||
-          produit.description.toLowerCase().contains(query);
+      return produit.nom.toLowerCase().contains(query) ||
+          (produit.modele?.toLowerCase().contains(query) ?? false) ||
+          (produit.description?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
@@ -183,16 +154,10 @@ class _ProduitPageState extends State<ProduitPage>
     }
     final query = _searchController.text.toLowerCase();
     return _accessoires.where((produit) {
-      return produit.name.toLowerCase().contains(query) ||
-          produit.serialNumber.toLowerCase().contains(query) ||
-          produit.description.toLowerCase().contains(query);
+      return produit.nom.toLowerCase().contains(query) ||
+          (produit.modele?.toLowerCase().contains(query) ?? false) ||
+          (produit.description?.toLowerCase().contains(query) ?? false);
     }).toList();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -302,25 +267,30 @@ class _ProduitPageState extends State<ProduitPage>
               child: Icon(
                 produit.categoryIcon,
                 color: Colors.blue[900],
-                size: 28,
+                size: 20,
               ),
             ),
 
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  produit.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                Expanded(
+                  child: Text(
+                    produit.nom,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
+                SizedBox(width: 25),
                 Text(
-                  '${produit.price.toStringAsFixed(2)} \$',
+                  '${produit.prixVente} ${produit.deviseSymbole}',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.blue[900],
                   ),
@@ -341,16 +311,16 @@ class _ProduitPageState extends State<ProduitPage>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Quantité: ${produit.quantity}',
+                      'Modèle: ${produit.modele ?? 'N/A'}',
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 5),
                     Icon(Icons.tag_outlined, size: 14, color: Colors.grey[600]),
                     const SizedBox(width: 4),
-                    Text(
-                      produit.serialNumber,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
+                    // Text(
+                    //   'Status: ${produit.status}',
+                    //   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    // ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -363,7 +333,7 @@ class _ProduitPageState extends State<ProduitPage>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Enregistré le: ${_formatDate(produit.registrationDate)}',
+                      'Enregistré le: ${_formatDate(produit.createdAt)}',
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
@@ -374,7 +344,7 @@ class _ProduitPageState extends State<ProduitPage>
               mainAxisSize: MainAxisSize.min,
 
               children: [
-                SizedBox(width: 8),
+                SizedBox(width: 1),
                 PopupMenuButton<String>(
                   icon: Icon(Icons.more_vert, color: Colors.grey[600]),
                   color: Colors.white,
@@ -431,12 +401,12 @@ class _ProduitPageState extends State<ProduitPage>
       case 'remise':
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Remise: ${produit.name}')));
+        ).showSnackBar(SnackBar(content: Text('Remise: ${produit.nom}')));
         break;
       case 'vente':
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Vente: ${produit.name}')));
+        ).showSnackBar(SnackBar(content: Text('Vente: ${produit.nom}')));
         break;
     }
   }

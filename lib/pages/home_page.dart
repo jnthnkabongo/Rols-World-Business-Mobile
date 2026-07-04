@@ -1,4 +1,6 @@
+import 'dart:core';
 import 'package:flutter/material.dart';
+import 'package:rols/services/api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,6 +10,43 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _isLoading = false;
+  Map<String, dynamic>? _userData;
+  Map<String, dynamic>? _dashboardData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    _loadDashboard();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final userData = await ApiService.recupererDonneesUser('user');
+
+    setState(() {
+      _isLoading = false;
+      _userData = userData;
+    });
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final dashboardData = await ApiService.getDashboard();
+
+    setState(() {
+      _isLoading = false;
+      _dashboardData = dashboardData;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,9 +162,9 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'Utilisateur',
+                                  '${_userData?['name'] ?? 'Utilisateur'}',
                                   style: TextStyle(
-                                    fontSize: 22,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     letterSpacing: -0.5,
@@ -205,29 +244,29 @@ class _HomePageState extends State<HomePage> {
               children: [
                 _buildCategoryCard(
                   'Téléphones',
-                  '5',
-                  '2 450 000 000 \$',
+                  '${_dashboardData?['sommes_produit_categorie1'] ?? '0'}',
+                  '${_dashboardData?['sommes_produit_categorie1'] ?? '0'} produits',
                   Icons.phone_android,
                   Colors.blue,
                 ),
                 _buildCategoryCard(
                   'Chaussures',
-                  '2',
-                  '180 \$',
+                  '${_dashboardData?['sommes_produit_categorie2'] ?? '0'}',
+                  '${_dashboardData?['sommes_produit_categorie2'] ?? '0'} produits',
                   Icons.sports,
                   Colors.green,
                 ),
                 _buildCategoryCard(
                   'Accessoires',
-                  '3',
-                  '320 \$',
+                  '${_dashboardData?['sommes_produit_categorie3'] ?? '0'}',
+                  '${_dashboardData?['sommes_produit_categorie3'] ?? '0'} produits',
                   Icons.headphones,
                   Colors.orange,
                 ),
                 _buildCategoryCard(
                   'Autres',
-                  '1',
-                  '95 \$',
+                  '${_dashboardData?['sommes_produits'] ?? '0'}',
+                  '${_dashboardData?['sommes_produits'] ?? '0'} produits',
                   Icons.category,
                   Colors.purple,
                 ),
@@ -307,11 +346,17 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   // Table Rows
-                  _buildTableRow('iPhone 15 Pro', '2', '2 399,98 \$'),
-                  _buildTableRow('Nike Air Max', '1', '120,00 \$'),
-                  _buildTableRow('Coque iPhone', '3', '45,00 \$'),
-                  _buildTableRow('Samsung S24', '1', '899,99 \$'),
-                  _buildTableRow('Écouteurs Bluetooth', '2', '89,99 \$'),
+                  ...(_dashboardData?['liste_ventes'] as List<dynamic>? ?? [])
+                      .take(5)
+                      .map((vente) {
+                        final client = vente['client'] ?? {};
+                        return _buildTableRow(
+                          client['nom_client'] ?? 'Inconnu',
+                          vente['date_vente'] ?? '',
+                          '${vente['total'] ?? '0'} \$',
+                        );
+                      })
+                      .toList(),
                 ],
               ),
             ),
@@ -396,7 +441,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(sales, style: TextStyle(fontSize: 18, color: Colors.white)),
               Text(
-                amount,
+                '${_dashboardData?['sommes_produit_categorie1'] ?? ''}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

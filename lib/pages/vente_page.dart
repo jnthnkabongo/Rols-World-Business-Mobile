@@ -1,8 +1,12 @@
+import 'dart:core';
+
 import 'package:flutter/material.dart';
+import 'package:rols/services/api_service.dart';
 
 class Vente {
+  final int id;
   final String productName;
-  final String description;
+  final String? description;
   final double price;
   final int quantity;
   final double total;
@@ -10,10 +14,13 @@ class Vente {
   final DateTime saleDate;
   final String saleNumber;
   final IconData categoryIcon;
+  final String statut;
+  final int deviseId;
 
   Vente({
+    required this.id,
     required this.productName,
-    required this.description,
+    this.description,
     required this.price,
     required this.quantity,
     required this.total,
@@ -21,7 +28,84 @@ class Vente {
     required this.saleDate,
     required this.saleNumber,
     required this.categoryIcon,
+    required this.statut,
+    required this.deviseId,
   });
+
+  factory Vente.fromJson(Map<String, dynamic> json, IconData icon) {
+    // Récupérer les détails de la vente
+    List<dynamic> ventedetails = json['ventedetails'] ?? [];
+
+    // Si pas de détails, valeurs par défaut
+    String productName = 'Produit inconnu';
+    double price = 0.0;
+    int quantity = 0;
+
+    if (ventedetails.isNotEmpty) {
+      var firstDetail = ventedetails[0];
+      var produitUnite = firstDetail['produit_unite'];
+      if (produitUnite != null) {
+        var produit = produitUnite['produit'];
+        if (produit != null) {
+          productName = produit['nom'] ?? 'Produit inconnu';
+        }
+        price =
+            double.tryParse(firstDetail['prix_unitaire']?.toString() ?? '0') ??
+            0.0;
+        quantity = firstDetail['quantite'] ?? 0;
+      }
+    }
+
+    // Client
+    var client = json['client'];
+    String clientName = client != null
+        ? client['nom_client'] ?? 'Client inconnu'
+        : 'Client inconnu';
+
+    // Date de vente
+    DateTime saleDate = DateTime.now();
+    String dateVente = json['date_vente'] ?? '';
+    if (dateVente.isNotEmpty) {
+      try {
+        saleDate = DateTime.parse(dateVente);
+      } catch (e) {
+        saleDate = DateTime.now();
+      }
+    }
+
+    // Total
+    double total = double.tryParse(json['total']?.toString() ?? '0') ?? 0.0;
+
+    // Statut
+    String statut = json['statut'] ?? 'inconnu';
+
+    // Devise ID
+    int deviseId = json['devise_id'] ?? 1;
+
+    return Vente(
+      id: json['id'],
+      productName: productName,
+      description: null,
+      price: price,
+      quantity: quantity,
+      total: total,
+      clientName: clientName,
+      saleDate: saleDate,
+      saleNumber: 'VTE-${json['id']}',
+      categoryIcon: icon,
+      statut: statut,
+      deviseId: deviseId,
+    );
+  }
+
+  String get deviseSymbole {
+    if (deviseId == 1) {
+      return '\$';
+    } else if (deviseId == 2) {
+      return 'FC';
+    }
+    return '';
+  }
 }
 
 class VentePage extends StatefulWidget {
@@ -33,103 +117,138 @@ class VentePage extends StatefulWidget {
 
 class _VentePageState extends State<VentePage> {
   final TextEditingController _searchController = TextEditingController();
-  final List<Vente> _ventes = [
-    Vente(
-      productName: 'iPhone 15 Pro',
-      description: '256GB, Titanium',
-      price: 1199.99,
-      quantity: 2,
-      total: 2399.98,
-      clientName: 'Jean Dupont',
-      saleDate: DateTime(2024, 6, 15),
-      saleNumber: 'VTE-2024-001',
-      categoryIcon: Icons.computer,
-    ),
-    Vente(
-      productName: 'Nike Air Max 270',
-      description: 'Taille 42, Noir',
-      price: 149.99,
-      quantity: 1,
-      total: 149.99,
-      clientName: 'Marie Martin',
-      saleDate: DateTime(2024, 6, 14),
-      saleNumber: 'VTE-2024-002',
-      categoryIcon: Icons.sports_basketball,
-    ),
-    Vente(
-      productName: 'MacBook Air M3',
-      description: '13 pouces, 8GB RAM',
-      price: 1299.99,
-      quantity: 1,
-      total: 1299.99,
-      clientName: 'Pierre Bernard',
-      saleDate: DateTime(2024, 6, 13),
-      saleNumber: 'VTE-2024-003',
-      categoryIcon: Icons.computer,
-    ),
-    Vente(
-      productName: 'Adidas Ultraboost',
-      description: 'Taille 43, Blanc',
-      price: 179.99,
-      quantity: 3,
-      total: 539.97,
-      clientName: 'Sophie Leroy',
-      saleDate: DateTime(2024, 6, 12),
-      saleNumber: 'VTE-2024-004',
-      categoryIcon: Icons.sports_basketball,
-    ),
-    Vente(
-      productName: 'Montre Apple Watch',
-      description: 'Series 9, GPS',
-      price: 399.99,
-      quantity: 1,
-      total: 399.99,
-      clientName: 'Luc Petit',
-      saleDate: DateTime(2024, 6, 11),
-      saleNumber: 'VTE-2024-005',
-      categoryIcon: Icons.watch,
-    ),
-    Vente(
-      productName: 'AirPods Pro 2',
-      description: 'USB-C, Active Noise Cancellation',
-      price: 249.99,
-      quantity: 2,
-      total: 499.98,
-      clientName: 'Emma Moreau',
-      saleDate: DateTime(2024, 6, 10),
-      saleNumber: 'VTE-2024-006',
-      categoryIcon: Icons.computer,
-    ),
-    Vente(
-      productName: 'Puma RS-X',
-      description: 'Taille 41, Rouge',
-      price: 119.99,
-      quantity: 1,
-      total: 119.99,
-      clientName: 'Thomas Dubois',
-      saleDate: DateTime(2024, 6, 9),
-      saleNumber: 'VTE-2024-007',
-      categoryIcon: Icons.sports_basketball,
-    ),
-    Vente(
-      productName: 'Sac à dos Nike',
-      description: 'Noir, 30L',
-      price: 79.99,
-      quantity: 2,
-      total: 159.98,
-      clientName: 'Camille Roux',
-      saleDate: DateTime(2024, 6, 8),
-      saleNumber: 'VTE-2024-008',
-      categoryIcon: Icons.watch,
-    ),
-  ];
+  bool _isLoading = false;
+
+  List<Vente> _listeVentes = [];
+
+  // final List<Vente> _ventes = [
+  //   Vente(
+  //     productName: 'iPhone 15 Pro',
+  //     description: '256GB, Titanium',
+  //     price: 1199.99,
+  //     quantity: 2,
+  //     total: 2399.98,
+  //     clientName: 'Jean Dupont',
+  //     saleDate: DateTime(2024, 6, 15),
+  //     saleNumber: 'VTE-2024-001',
+  //     categoryIcon: Icons.computer,
+  //   ),
+  //   Vente(
+  //     productName: 'Nike Air Max 270',
+  //     description: 'Taille 42, Noir',
+  //     price: 149.99,
+  //     quantity: 1,
+  //     total: 149.99,
+  //     clientName: 'Marie Martin',
+  //     saleDate: DateTime(2024, 6, 14),
+  //     saleNumber: 'VTE-2024-002',
+  //     categoryIcon: Icons.sports_basketball,
+  //   ),
+  //   Vente(
+  //     productName: 'MacBook Air M3',
+  //     description: '13 pouces, 8GB RAM',
+  //     price: 1299.99,
+  //     quantity: 1,
+  //     total: 1299.99,
+  //     clientName: 'Pierre Bernard',
+  //     saleDate: DateTime(2024, 6, 13),
+  //     saleNumber: 'VTE-2024-003',
+  //     categoryIcon: Icons.computer,
+  //   ),
+  //   Vente(
+  //     productName: 'Adidas Ultraboost',
+  //     description: 'Taille 43, Blanc',
+  //     price: 179.99,
+  //     quantity: 3,
+  //     total: 539.97,
+  //     clientName: 'Sophie Leroy',
+  //     saleDate: DateTime(2024, 6, 12),
+  //     saleNumber: 'VTE-2024-004',
+  //     categoryIcon: Icons.sports_basketball,
+  //   ),
+  //   Vente(
+  //     productName: 'Montre Apple Watch',
+  //     description: 'Series 9, GPS',
+  //     price: 399.99,
+  //     quantity: 1,
+  //     total: 399.99,
+  //     clientName: 'Luc Petit',
+  //     saleDate: DateTime(2024, 6, 11),
+  //     saleNumber: 'VTE-2024-005',
+  //     categoryIcon: Icons.watch,
+  //   ),
+  //   Vente(
+  //     productName: 'AirPods Pro 2',
+  //     description: 'USB-C, Active Noise Cancellation',
+  //     price: 249.99,
+  //     quantity: 2,
+  //     total: 499.98,
+  //     clientName: 'Emma Moreau',
+  //     saleDate: DateTime(2024, 6, 10),
+  //     saleNumber: 'VTE-2024-006',
+  //     categoryIcon: Icons.computer,
+  //   ),
+  //   Vente(
+  //     productName: 'Puma RS-X',
+  //     description: 'Taille 41, Rouge',
+  //     price: 119.99,
+  //     quantity: 1,
+  //     total: 119.99,
+  //     clientName: 'Thomas Dubois',
+  //     saleDate: DateTime(2024, 6, 9),
+  //     saleNumber: 'VTE-2024-007',
+  //     categoryIcon: Icons.sports_basketball,
+  //   ),
+  //   Vente(
+  //     productName: 'Sac à dos Nike',
+  //     description: 'Noir, 30L',
+  //     price: 79.99,
+  //     quantity: 2,
+  //     total: 159.98,
+  //     clientName: 'Camille Roux',
+  //     saleDate: DateTime(2024, 6, 8),
+  //     saleNumber: 'VTE-2024-008',
+  //     categoryIcon: Icons.watch,
+  //   ),
+  // ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVentes();
+  }
+
+  Future _loadVentes() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final ventesData = await ApiService.getVentes();
+
+      setState(() {
+        _listeVentes = (ventesData['liste_ventes'] as List<dynamic>? ?? [])
+            .map(
+              (json) =>
+                  Vente.fromJson(json as Map<String, dynamic>, Icons.watch),
+            )
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erreur chargement produits: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   List<Vente> get _filteredVentes {
     if (_searchController.text.isEmpty) {
-      return _ventes;
+      return _listeVentes;
     }
     final query = _searchController.text.toLowerCase();
-    return _ventes.where((vente) {
+    return _listeVentes.where((vente) {
       return vente.productName.toLowerCase().contains(query) ||
           vente.clientName.toLowerCase().contains(query) ||
           vente.saleNumber.toLowerCase().contains(query);
@@ -236,11 +355,15 @@ class _VentePageState extends State<VentePage> {
                               color: Colors.grey[600],
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              vente.clientName,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
+                            Expanded(
+                              child: Text(
+                                vente.clientName,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -250,11 +373,15 @@ class _VentePageState extends State<VentePage> {
                               color: Colors.grey[600],
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              'Qté: ${vente.quantity}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
+                            Expanded(
+                              child: Text(
+                                'Qté: ${vente.quantity}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
@@ -301,7 +428,7 @@ class _VentePageState extends State<VentePage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${vente.total.toStringAsFixed(2)} €',
+                              '${vente.total.toStringAsFixed(2)} ${vente.deviseSymbole}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -309,67 +436,13 @@ class _VentePageState extends State<VentePage> {
                               ),
                             ),
                             Text(
-                              '${vente.price.toStringAsFixed(2)} €/unité',
+                              '${vente.price.toStringAsFixed(2)} ${vente.deviseSymbole}/unité',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey[600],
                               ),
                             ),
                           ],
-                        ),
-                        SizedBox(width: 8),
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert, color: Colors.grey[600]),
-                          color: Colors.white,
-                          onSelected: (String choice) {
-                            _handleMenuChoice(choice, vente);
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return [
-                              PopupMenuItem<String>(
-                                value: 'details',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.visibility,
-                                      color: Colors.green,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text('Voir détails'),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: 'refund',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.money_off,
-                                      color: Colors.orange,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text('Rembourser'),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text('Supprimer'),
-                                  ],
-                                ),
-                              ),
-                            ];
-                          },
                         ),
                       ],
                     ),
@@ -380,56 +453,36 @@ class _VentePageState extends State<VentePage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Action pour ajouter une nouvelle vente
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Nouvelle vente'),
-                content: const Text(
-                  'Formulaire d\'ajout de vente à implémenter',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Fermer'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-        backgroundColor: Colors.blue[900],
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     // Action pour ajouter une nouvelle vente
+      //     showDialog(
+      //       context: context,
+      //       builder: (BuildContext context) {
+      //         return AlertDialog(
+      //           title: const Text('Nouvelle vente'),
+      //           content: const Text(
+      //             'Formulaire d\'ajout de vente à implémenter',
+      //           ),
+      //           actions: [
+      //             TextButton(
+      //               onPressed: () {
+      //                 Navigator.of(context).pop();
+      //               },
+      //               child: const Text('Fermer'),
+      //             ),
+      //           ],
+      //         );
+      //       },
+      //     );
+      //   },
+      //   backgroundColor: Colors.blue[900],
+      //   child: const Icon(Icons.add, color: Colors.white),
+      // ),
     );
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  void _handleMenuChoice(String choice, Vente vente) {
-    switch (choice) {
-      case 'details':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Voir détails: ${vente.productName}')),
-        );
-        break;
-      case 'refund':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rembourser: ${vente.productName}')),
-        );
-        break;
-      case 'delete':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Supprimer: ${vente.productName}')),
-        );
-        break;
-    }
   }
 }

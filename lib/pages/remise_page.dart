@@ -1,25 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:rols/services/api_service.dart';
 
 class Remise {
-  final String name;
-  final String description;
-  final double percentage;
-  final DateTime startDate;
-  final DateTime endDate;
-  final String code;
-  final bool isActive;
+  final int id;
+  final String nomRemise;
+  final String telephoneRemise;
+  final int quantite;
+  final String nomProduit;
+  final String prixVente;
+  final int deviseId;
+  final DateTime createdAt;
   final IconData categoryIcon;
 
   Remise({
-    required this.name,
-    required this.description,
-    required this.percentage,
-    required this.startDate,
-    required this.endDate,
-    required this.code,
-    required this.isActive,
+    required this.id,
+    required this.nomRemise,
+    required this.telephoneRemise,
+    required this.quantite,
+    required this.nomProduit,
+    required this.prixVente,
+    required this.deviseId,
+    required this.createdAt,
     required this.categoryIcon,
   });
+
+  factory Remise.fromJson(Map<String, dynamic> json, IconData icon) {
+    // Produit remise
+    var produitRemise = json['produit_remise'];
+    String nomProduit = 'Produit inconnu';
+    String prixVente = '0';
+    int deviseId = 1;
+
+    if (produitRemise != null) {
+      nomProduit = produitRemise['nom'] ?? 'Produit inconnu';
+      prixVente = produitRemise['prix_vente']?.toString() ?? '0';
+      deviseId = produitRemise['devise_id'] ?? 1;
+    }
+
+    // Date de création
+    DateTime createdAt = DateTime.now();
+    String createdAtStr = json['created_at'] ?? '';
+    if (createdAtStr.isNotEmpty) {
+      try {
+        createdAt = DateTime.parse(createdAtStr);
+      } catch (e) {
+        createdAt = DateTime.now();
+      }
+    }
+
+    return Remise(
+      id: json['id'],
+      nomRemise: json['nom_remise'] ?? 'Remise inconnue',
+      telephoneRemise: json['telephone_remise'] ?? '',
+      quantite: json['quantite'] ?? 0,
+      nomProduit: nomProduit,
+      prixVente: prixVente,
+      deviseId: deviseId,
+      createdAt: createdAt,
+      categoryIcon: icon,
+    );
+  }
+
+  String get deviseSymbole {
+    if (deviseId == 1) {
+      return '\$';
+    } else if (deviseId == 2) {
+      return 'FC';
+    }
+    return '';
+  }
 }
 
 class RemisePage extends StatefulWidget {
@@ -31,99 +80,100 @@ class RemisePage extends StatefulWidget {
 
 class _RemisePageState extends State<RemisePage> {
   final TextEditingController _searchController = TextEditingController();
-  final List<Remise> _remises = [
-    Remise(
-      name: 'Soldes d\'été',
-      description: 'Réduction sur tous les produits électroniques',
-      percentage: 20.0,
-      startDate: DateTime(2024, 6, 1),
-      endDate: DateTime(2024, 8, 31),
-      code: 'SOLTE2024',
-      isActive: true,
-      categoryIcon: Icons.computer,
-    ),
-    Remise(
-      name: 'Promo Chaussures',
-      description: 'Remise sur la collection Nike',
-      percentage: 15.0,
-      startDate: DateTime(2024, 6, 15),
-      endDate: DateTime(2024, 7, 15),
-      code: 'NIKE15',
-      isActive: true,
-      categoryIcon: Icons.sports_basketball,
-    ),
-    Remise(
-      name: 'VIP Client',
-      description: 'Réduction exclusive pour clients fidèles',
-      percentage: 10.0,
-      startDate: DateTime(2024, 1, 1),
-      endDate: DateTime(2024, 12, 31),
-      code: 'VIP2024',
-      isActive: true,
-      categoryIcon: Icons.card_giftcard,
-    ),
-    Remise(
-      name: 'Flash Sale',
-      description: 'Offre limitée sur les accessoires',
-      percentage: 25.0,
-      startDate: DateTime(2024, 5, 20),
-      endDate: DateTime(2024, 5, 25),
-      code: 'FLASH25',
-      isActive: false,
-      categoryIcon: Icons.watch,
-    ),
-    Remise(
-      name: 'Back to School',
-      description: 'Préparation rentrée scolaire',
-      percentage: 12.0,
-      startDate: DateTime(2024, 8, 15),
-      endDate: DateTime(2024, 9, 15),
-      code: 'SCHOOL24',
-      isActive: false,
-      categoryIcon: Icons.school,
-    ),
-    Remise(
-      name: 'Black Friday',
-      description: 'Meilleures offres de l\'année',
-      percentage: 30.0,
-      startDate: DateTime(2024, 11, 29),
-      endDate: DateTime(2024, 12, 2),
-      code: 'BLACK30',
-      isActive: false,
-      categoryIcon: Icons.local_offer,
-    ),
-    Remise(
-      name: 'Nouveau Client',
-      description: 'Bienvenue avec -10% sur première commande',
-      percentage: 10.0,
-      startDate: DateTime(2024, 1, 1),
-      endDate: DateTime(2024, 12, 31),
-      code: 'WELCOME10',
-      isActive: true,
-      categoryIcon: Icons.person_add,
-    ),
-    Remise(
-      name: 'Pâques 2024',
-      description: 'Offre saisonnière de printemps',
-      percentage: 18.0,
-      startDate: DateTime(2024, 3, 25),
-      endDate: DateTime(2024, 4, 10),
-      code: 'PAQUES18',
-      isActive: false,
-      categoryIcon: Icons.celebration,
-    ),
-  ];
+  bool _isLoading = false;
+
+  List<Remise> _listeRemises = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRemises();
+  }
+
+  Future _loadRemises() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final remisesData = await ApiService.getRemises();
+
+      setState(() {
+        _listeRemises = (remisesData['liste_remises'] as List<dynamic>? ?? [])
+            .map(
+              (json) => Remise.fromJson(
+                json as Map<String, dynamic>,
+                Icons.local_offer,
+              ),
+            )
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erreur chargement produits: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   List<Remise> get _filteredRemises {
     if (_searchController.text.isEmpty) {
-      return _remises;
+      return _listeRemises;
     }
     final query = _searchController.text.toLowerCase();
-    return _remises.where((remise) {
-      return remise.name.toLowerCase().contains(query) ||
-          remise.code.toLowerCase().contains(query) ||
-          remise.description.toLowerCase().contains(query);
+    return _listeRemises.where((remise) {
+      return remise.nomRemise.toLowerCase().contains(query) ||
+          remise.nomProduit.toLowerCase().contains(query) ||
+          remise.telephoneRemise.toLowerCase().contains(query);
     }).toList();
+  }
+
+  Future _retournerRemise(int remiseId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await ApiService.retourRemiseProduit(
+        produitIdRetour: remiseId.toString(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response['message'] ?? 'Produit retourné avec succès',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Recharger la liste des remises
+        _loadRemises();
+      }
+    } catch (e) {
+      print('Erreur retour remise: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors du retour: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _handleMenuChoice(String choice, Remise remise) {
+    switch (choice) {
+      case 'Retour vente':
+        _retournerRemise(remise.id);
+        break;
+    }
   }
 
   @override
@@ -197,19 +247,17 @@ class _RemisePageState extends State<RemisePage> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: remise.isActive
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.grey.withOpacity(0.1),
+                        color: Colors.blue[900]!.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         remise.categoryIcon,
-                        color: remise.isActive ? Colors.green : Colors.grey,
+                        color: Colors.blue[900],
                         size: 28,
                       ),
                     ),
                     title: Text(
-                      remise.name,
+                      remise.nomRemise,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -223,14 +271,16 @@ class _RemisePageState extends State<RemisePage> {
                         Row(
                           children: [
                             Icon(
-                              Icons.description_outlined,
+                              Icons.person_outline,
                               size: 14,
                               color: Colors.grey[600],
                             ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                remise.description,
+                                remise.telephoneRemise.isNotEmpty
+                                    ? remise.telephoneRemise
+                                    : 'Pas de téléphone',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey[600],
@@ -243,10 +293,14 @@ class _RemisePageState extends State<RemisePage> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.code, size: 14, color: Colors.grey[600]),
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 4),
                             Text(
-                              remise.code,
+                              'Qté: ${remise.quantite}',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[600],
@@ -260,10 +314,31 @@ class _RemisePageState extends State<RemisePage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${_formatDate(remise.startDate)} - ${_formatDate(remise.endDate)}',
+                              _formatDate(remise.createdAt),
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.shopping_bag_outlined,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                remise.nomProduit,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -273,6 +348,20 @@ class _RemisePageState extends State<RemisePage> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${remise.prixVente} ${remise.deviseSymbole}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[900],
+                              ),
+                            ),
+                          ],
+                        ),
                         SizedBox(width: 8),
                         PopupMenuButton<String>(
                           icon: Icon(Icons.more_vert, color: Colors.grey[600]),
@@ -296,20 +385,6 @@ class _RemisePageState extends State<RemisePage> {
                                   ],
                                 ),
                               ),
-                              PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.flash_on_rounded,
-                                      color: Colors.blue[900],
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text('Supprimer'),
-                                  ],
-                                ),
-                              ),
                             ];
                           },
                         ),
@@ -327,20 +402,5 @@ class _RemisePageState extends State<RemisePage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  void _handleMenuChoice(String choice, Remise remise) {
-    switch (choice) {
-      case 'Retour vente':
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Retour vente: ${remise.name}')));
-        break;
-      case 'delete':
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Supprimer: ${remise.name}')));
-        break;
-    }
   }
 }

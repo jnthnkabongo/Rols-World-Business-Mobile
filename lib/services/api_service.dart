@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  //final String _baseUrl = 'http://localhost:3000';
+  // static const String baseUrl = 'https://rolsworldbusiness.alwaysdata.net/api';
 
   static String get baseUrl {
     if (kIsWeb) {
@@ -178,7 +178,14 @@ class ApiService {
   }
 
   //Soumission d'une vente
-  static Future<Map<String, dynamic>> postVente() async {
+  static Future<Map<String, dynamic>> postVente({
+    required String produitId,
+    required String nomClient,
+    required String telephone,
+    required String email,
+    required String adresse,
+    required String quantite,
+  }) async {
     try {
       final token = await recupererDonneesUser(_tokenKey);
       if (token == null) {
@@ -190,13 +197,22 @@ class ApiService {
         tokenValue = token.split('|')[1];
       }
 
+      final body = {
+        'nom_client': nomClient,
+        'telephone': telephone,
+        'email': email,
+        'adresse': adresse,
+        'quantite': quantite,
+      };
+
       final response = await http.post(
-        Uri.parse('$baseUrl/ventes'),
+        Uri.parse('$baseUrl/ajout-vente/$produitId'),
         headers: {
           'Content-type': 'Application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $tokenValue',
         },
+        body: jsonEncode(body),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -245,6 +261,52 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> postRemise({
+    required String produitIdRemise,
+    required String nomRemise,
+    required String telephoneRemise,
+    required String quantiteRemise,
+  }) async {
+    try {
+      final token = await recupererDonneesUser(_tokenKey);
+      if (token == null) {
+        throw Exception('Token non trouver');
+      }
+      // Extraire la partie token du format Laravel Sanctum (id|token)
+      String tokenValue = token;
+      if (token is String && token.contains('|')) {
+        tokenValue = token.split('|')[1];
+      }
+
+      final body = {
+        'nom_remise': nomRemise,
+        'telephone_remise': telephoneRemise,
+        'quantite': quantiteRemise,
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/ajout-remise/$produitIdRemise'),
+        headers: {
+          'Content-type': 'Application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $tokenValue',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final data = jsonDecode(response.body);
+        final message = data['message'] ?? 'Erreur de connexion';
+        throw Exception(message);
+      }
+    } catch (e) {
+      throw Exception('Erreur de réseau : ${e.toString()}');
+    }
+  }
+
   //Retourner le produit qui n'a pas ete vendu avec l'option remise
   static Future<Map<String, dynamic>> getRetourRemise() async {
     try {
@@ -266,6 +328,42 @@ class ApiService {
           'Authorization': 'Bearer $tokenValue',
         },
       );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final data = jsonDecode(response.body);
+        final message = data['message'] ?? 'Erreur de connexion';
+        throw Exception(message);
+      }
+    } catch (e) {
+      throw Exception('Erreur de réseau : ${e.toString()}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> retourRemiseProduit({
+    required String produitIdRetour,
+  }) async {
+    try {
+      final token = await recupererDonneesUser(_tokenKey);
+      if (token == null) {
+        throw Exception('Token non trouver');
+      }
+      // Extraire la partie token du format Laravel Sanctum (id|token)
+      String tokenValue = token;
+      if (token is String && token.contains('|')) {
+        tokenValue = token.split('|')[1];
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/retourner-remise/$produitIdRetour'),
+        headers: {
+          'Content-type': 'Application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $tokenValue',
+        },
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data;

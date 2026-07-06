@@ -47,6 +47,15 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  String get deviseSymbole {
+    if (_dashboardData?['devise_id'] == 1) {
+      return '\$';
+    } else if (_dashboardData?['devise_id'] == 2) {
+      return 'FC';
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,13 +67,14 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Rol\'s Store',
+              'Rol\'s Application',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
+
             Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -324,7 +334,7 @@ class _HomePageState extends State<HomePage> {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            'Quantité',
+                            'Date',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
@@ -350,13 +360,14 @@ class _HomePageState extends State<HomePage> {
                       .take(5)
                       .map((vente) {
                         final client = vente['client'] ?? {};
+                        final deviseId = vente['devise_id'] ?? 1;
+                        final deviseSymbole = deviseId == 1 ? '\$' : 'FC';
                         return _buildTableRow(
                           client['nom_client'] ?? 'Inconnu',
                           vente['date_vente'] ?? '',
-                          '${vente['total'] ?? '0'} \$',
+                          '${vente['total'] ?? '0'} $deviseSymbole',
                         );
-                      })
-                      .toList(),
+                      }),
                 ],
               ),
             ),
@@ -439,11 +450,11 @@ class _HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(sales, style: TextStyle(fontSize: 18, color: Colors.white)),
+              Text(sales, style: TextStyle(fontSize: 15, color: Colors.white)),
               Text(
                 '${_dashboardData?['sommes_produit_categorie1'] ?? ''}',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),

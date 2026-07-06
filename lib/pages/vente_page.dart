@@ -16,6 +16,7 @@ class Vente {
   final IconData categoryIcon;
   final String statut;
   final int deviseId;
+  final String? numeroSerie;
 
   Vente({
     required this.id,
@@ -30,6 +31,7 @@ class Vente {
     required this.categoryIcon,
     required this.statut,
     required this.deviseId,
+    this.numeroSerie,
   });
 
   factory Vente.fromJson(Map<String, dynamic> json, IconData icon) {
@@ -53,6 +55,16 @@ class Vente {
             double.tryParse(firstDetail['prix_unitaire']?.toString() ?? '0') ??
             0.0;
         quantity = firstDetail['quantite'] ?? 0;
+      }
+    }
+
+    // Numéro de série
+    String numeroSerie = '';
+    if (ventedetails.isNotEmpty) {
+      var firstDetail = ventedetails[0];
+      var produitUnite = firstDetail['produit_unite'];
+      if (produitUnite != null) {
+        numeroSerie = produitUnite['numero_serie'] ?? '';
       }
     }
 
@@ -95,6 +107,7 @@ class Vente {
       categoryIcon: icon,
       statut: statut,
       deviseId: deviseId,
+      numeroSerie: numeroSerie,
     );
   }
 
@@ -121,97 +134,6 @@ class _VentePageState extends State<VentePage> {
 
   List<Vente> _listeVentes = [];
 
-  // final List<Vente> _ventes = [
-  //   Vente(
-  //     productName: 'iPhone 15 Pro',
-  //     description: '256GB, Titanium',
-  //     price: 1199.99,
-  //     quantity: 2,
-  //     total: 2399.98,
-  //     clientName: 'Jean Dupont',
-  //     saleDate: DateTime(2024, 6, 15),
-  //     saleNumber: 'VTE-2024-001',
-  //     categoryIcon: Icons.computer,
-  //   ),
-  //   Vente(
-  //     productName: 'Nike Air Max 270',
-  //     description: 'Taille 42, Noir',
-  //     price: 149.99,
-  //     quantity: 1,
-  //     total: 149.99,
-  //     clientName: 'Marie Martin',
-  //     saleDate: DateTime(2024, 6, 14),
-  //     saleNumber: 'VTE-2024-002',
-  //     categoryIcon: Icons.sports_basketball,
-  //   ),
-  //   Vente(
-  //     productName: 'MacBook Air M3',
-  //     description: '13 pouces, 8GB RAM',
-  //     price: 1299.99,
-  //     quantity: 1,
-  //     total: 1299.99,
-  //     clientName: 'Pierre Bernard',
-  //     saleDate: DateTime(2024, 6, 13),
-  //     saleNumber: 'VTE-2024-003',
-  //     categoryIcon: Icons.computer,
-  //   ),
-  //   Vente(
-  //     productName: 'Adidas Ultraboost',
-  //     description: 'Taille 43, Blanc',
-  //     price: 179.99,
-  //     quantity: 3,
-  //     total: 539.97,
-  //     clientName: 'Sophie Leroy',
-  //     saleDate: DateTime(2024, 6, 12),
-  //     saleNumber: 'VTE-2024-004',
-  //     categoryIcon: Icons.sports_basketball,
-  //   ),
-  //   Vente(
-  //     productName: 'Montre Apple Watch',
-  //     description: 'Series 9, GPS',
-  //     price: 399.99,
-  //     quantity: 1,
-  //     total: 399.99,
-  //     clientName: 'Luc Petit',
-  //     saleDate: DateTime(2024, 6, 11),
-  //     saleNumber: 'VTE-2024-005',
-  //     categoryIcon: Icons.watch,
-  //   ),
-  //   Vente(
-  //     productName: 'AirPods Pro 2',
-  //     description: 'USB-C, Active Noise Cancellation',
-  //     price: 249.99,
-  //     quantity: 2,
-  //     total: 499.98,
-  //     clientName: 'Emma Moreau',
-  //     saleDate: DateTime(2024, 6, 10),
-  //     saleNumber: 'VTE-2024-006',
-  //     categoryIcon: Icons.computer,
-  //   ),
-  //   Vente(
-  //     productName: 'Puma RS-X',
-  //     description: 'Taille 41, Rouge',
-  //     price: 119.99,
-  //     quantity: 1,
-  //     total: 119.99,
-  //     clientName: 'Thomas Dubois',
-  //     saleDate: DateTime(2024, 6, 9),
-  //     saleNumber: 'VTE-2024-007',
-  //     categoryIcon: Icons.sports_basketball,
-  //   ),
-  //   Vente(
-  //     productName: 'Sac à dos Nike',
-  //     description: 'Noir, 30L',
-  //     price: 79.99,
-  //     quantity: 2,
-  //     total: 159.98,
-  //     clientName: 'Camille Roux',
-  //     saleDate: DateTime(2024, 6, 8),
-  //     saleNumber: 'VTE-2024-008',
-  //     categoryIcon: Icons.watch,
-  //   ),
-  // ];
-
   @override
   void initState() {
     super.initState();
@@ -229,8 +151,10 @@ class _VentePageState extends State<VentePage> {
       setState(() {
         _listeVentes = (ventesData['liste_ventes'] as List<dynamic>? ?? [])
             .map(
-              (json) =>
-                  Vente.fromJson(json as Map<String, dynamic>, Icons.watch),
+              (json) => Vente.fromJson(
+                json as Map<String, dynamic>,
+                Icons.shopping_bag,
+              ),
             )
             .toList();
         _isLoading = false;
@@ -376,6 +300,28 @@ class _VentePageState extends State<VentePage> {
                             Expanded(
                               child: Text(
                                 'Qté: ${vente.quantity}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.confirmation_number_outlined,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'N° Série: ${vente.numeroSerie ?? 'N/A'}',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey[600],

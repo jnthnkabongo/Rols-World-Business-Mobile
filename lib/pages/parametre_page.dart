@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:rols/login_page.dart';
+import 'package:rols/services/api_service.dart';
 
 class ParametrePage extends StatefulWidget {
   const ParametrePage({super.key});
@@ -10,6 +12,55 @@ class ParametrePage extends StatefulWidget {
 class _ParametrePageState extends State<ParametrePage> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
+  bool _isLoading = false;
+  Map<String, dynamic>? _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final userData = await ApiService.recupererDonneesUser('user');
+
+    setState(() {
+      _isLoading = false;
+      _userData = userData;
+    });
+  }
+
+  void _logout() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await ApiService.getLogout();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Déconnexion reussie !'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print("Erreur lors de la déconnexion: ${e.toString()}");
+      // Afficher un message d'erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la déconnexion: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,12 +105,12 @@ class _ParametrePageState extends State<ParametrePage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Utilisateur',
+                            '${_userData?['name'] ?? 'Utilisateur'}',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -68,7 +119,7 @@ class _ParametrePageState extends State<ParametrePage> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'user@example.com',
+                            '${_userData?['email'] ?? 'user@example.com'}',
                             style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         ],
@@ -283,8 +334,12 @@ class _ParametrePageState extends State<ParametrePage> {
           ),
           TextButton(
             onPressed: () {
+              _logout();
               Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Déconnexion'),

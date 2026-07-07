@@ -150,6 +150,8 @@ class _ProduitPageState extends State<ProduitPage>
   final _telephoneRemiseController = TextEditingController();
   final _quantiteRemiseController = TextEditingController();
 
+  final FocusNode nomClientFocus = FocusNode();
+
   bool _isLoading = false;
 
   List<Produit> _electroniques = [];
@@ -376,7 +378,12 @@ class _ProduitPageState extends State<ProduitPage>
                 key: _formKey,
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  ),
                   children: [
                     Center(
                       child: Container(
@@ -420,6 +427,7 @@ class _ProduitPageState extends State<ProduitPage>
                     TextFormField(
                       controller: nomclientController,
                       keyboardType: TextInputType.text,
+                      focusNode: nomClientFocus,
                       decoration: const InputDecoration(
                         labelText: "Nom client",
                         border: OutlineInputBorder(
@@ -576,9 +584,9 @@ class _ProduitPageState extends State<ProduitPage>
       builder: (context) {
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.5,
-          minChildSize: 0.5,
-          maxChildSize: 0.55,
+          initialChildSize: 0.40,
+          minChildSize: 0.3,
+          maxChildSize: 0.60,
           builder: (context, scrollController) {
             return Container(
               decoration: const BoxDecoration(
@@ -589,7 +597,12 @@ class _ProduitPageState extends State<ProduitPage>
                 key: formKey,
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 10,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  ),
                   children: [
                     Center(
                       child: Container(

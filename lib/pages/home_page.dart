@@ -254,6 +254,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 _buildCategoryCard(
                   'Téléphones',
+                  'Stocks',
                   '${_dashboardData?['sommes_produit_categorie1'] ?? '0'}',
                   '${_dashboardData?['sommes_produit_categorie1'] ?? '0'} produits',
                   Icons.phone_android,
@@ -261,6 +262,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 _buildCategoryCard(
                   'Chaussures',
+                  'Mouvements',
                   '${_dashboardData?['sommes_produit_categorie2'] ?? '0'}',
                   '${_dashboardData?['sommes_produit_categorie2'] ?? '0'} produits',
                   Icons.sports,
@@ -268,6 +270,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 _buildCategoryCard(
                   'Accessoires',
+                  'Bouge',
                   '${_dashboardData?['sommes_produit_categorie3'] ?? '0'}',
                   '${_dashboardData?['sommes_produit_categorie3'] ?? '0'} produits',
                   Icons.headphones,
@@ -275,6 +278,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 _buildCategoryCard(
                   'Autres',
+                  'Sauter',
                   '${_dashboardData?['sommes_produits'] ?? '0'}',
                   '${_dashboardData?['sommes_produits'] ?? '0'} produits',
                   Icons.category,
@@ -379,6 +383,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCategoryCard(
     String title,
+    String label,
     String sales,
     String amount,
     IconData icon,
@@ -430,7 +435,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Ventes',
+                label,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.7),
